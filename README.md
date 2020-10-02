@@ -4,3 +4,5 @@ A linux script to automatically arp spoof a device and gain a man in the middle 
 **Example of script running:**
 
 ![Example](https://i.imgur.com/bcwwF8U.png)
+
+> Don't use this script with malintent or to break any laws!
